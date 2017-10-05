@@ -19,7 +19,7 @@ def run(transfers_file, token_file, decoding_file, decoding_history):
     database = ToshlDatabase(token)
     decoder = Decoder(database, decoding_file, decoding_history)
     transfers = loadCSVFile(transfers_file)
-    app = SyncApp(token, decoder)
+    app = SyncApp(token, decoder, database)
     app.run(transfers)
 
 

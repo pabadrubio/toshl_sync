@@ -5,9 +5,10 @@ from toshl.log import Log
 
 class SyncApp:
 
-    def __init__(self, token, decoder):
+    def __init__(self, token, decoder, database):
         self.token = token
         self.decoder = decoder
+        self.database = database
 
     def run(self, transfers):
         for i in range(10):
@@ -17,18 +18,26 @@ class SyncApp:
     def handle_transfer(self, transfer):
         # Decode transfer
         decoded_transfer = self.decoder.try_to_decode(transfer)
-        Log.debug("Decoded transfer: " + str(decoded_transfer))
 
         # Show transfer info
         if decoded_transfer is None:
             decoded_transfer = self.decoder.decode_with_feedback(transfer)
 
+        Log.debug("Decoded transfer: " + str(decoded_transfer))
+
         # Check if the transfer is on the database (& send)
         if decoded_transfer is not None:
-            similarTransfer = decoded_transfer.searchForSimilarTransferInToshl()
+            similarTransfer = decoded_transfer.searchForSimilarTransferInToshl(self.token, self.database)
             if similarTransfer is not None and self.askForOverwrite(similarTransfer) == False:
                 return
             decoded_transfer.sendToToshl(self.token)
+        else:
+            Log.debug("Skiping transfer")
 
-    def askForOverwrite(self):
-        return False
+    def askForOverwrite(self, transfer):
+        print '-----------------------------------------------'
+        print 'A similar transfer was found:'
+        transfer.prettyPrint()
+        print '-----------------------------------------------'
+        selection = raw_input("Overwrite? (Enter yes to overwrite)")
+        return selection == "yes"

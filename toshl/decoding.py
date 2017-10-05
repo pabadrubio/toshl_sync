@@ -10,6 +10,7 @@ class Decoder:
     def __init__(self, toshlDatabase, decodingFile, decodingHistoryFile):
         self._decoding_hints = self._load_decoding_file(decodingFile)
         self._decoding_history = self._load_decoding_file(decodingHistoryFile)
+        self.decodingHistoryFile = decodingHistoryFile
         self.toshlDatabase = toshlDatabase
 
     def try_to_decode(self, csvTransfer):
@@ -35,20 +36,22 @@ class Decoder:
                                  csvTransfer.account + ' - ' + csvTransfer.purpose + ' - ' + csvTransfer.message,
                                  csvTransfer.amount)
         # Add to history ...
-
+        self._add_to_history_file(DecodingHint(csvTransfer.account, csvTransfer.purpose, csvTransfer.message,
+                                               category, tag))
         return transfer
 
     def choose_from_list(self, elements):
         index = 0
-        elementsPerRow = 3
+        elementsPerRow = 4
         while index < len(elements):
             lastInRow = min(len(elements), index + elementsPerRow)
             while index < lastInRow:
-                print '%2d. %-20s' % (index+1, elements[index]),
+                e = elements[index]
+                print '%2d. %-30s' % (index+1, (e[:26] + '..') if len(e) > 28 else e),
                 index += 1
             print ''
         selection = int(raw_input("Please choose (0 for None)"))
-        return None if (selection == 0) else elements[selection-1]
+        return '' if (selection == 0) else elements[selection-1]
 
     def _load_decoding_file(self, decodingFile):
         decoding_hints = []
@@ -74,6 +77,12 @@ class Decoder:
                                      csvTransfer.amount)
             return transfer
         return None
+
+    def _add_to_history_file(self, decodingHint):
+        self._decoding_history.append(decodingHint)
+        with open(self.decodingHistoryFile, "a") as f:
+            f.write(decodingHint.account + ";" + decodingHint.purpose + ";" + decodingHint.message + ";" +
+                    decodingHint.category + ";" + decodingHint.tag + '\n')
 
 
 class DecodingHint:

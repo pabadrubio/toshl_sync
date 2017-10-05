@@ -2,8 +2,10 @@
 #
 # Toshl database program
 
-import datetime
+import datetime, requests
 
+def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 class ToshlTransfer:
     def __init__(self, date, effective_date, account, category, tag, message, amount):
@@ -22,8 +24,37 @@ class ToshlTransfer:
     def __repr__(self):
         return self.__str__()
 
-    def searchForSimilarTransferInToshl(self):
+    def searchForSimilarTransferInToshl(self, token, database):
+        time_from = (self.date - datetime.timedelta(days=1)).isoformat()
+        time_to = (self.date + datetime.timedelta(days=1)).isoformat()
+        categories = database.getCategoryId(self.category) if self.category != "" else ""
+        tags = database.getTagId(self.tag) if self.tag != "" else ""
+        response = requests.get('https://api.toshl.com/entries?from=%s&to=%s%s%s' %
+                                (time_from,
+                                 time_to,
+                                 "&categories=%s" % categories if categories != "" else "",
+                                 "&tags=%s" % tags if tags != "" else ""),
+                                auth=(token, ""))
+        if response.status_code == 200:
+            entries = response.json()
+            for entry in entries:
+                if isclose(entry["amount"], self.amount):
+                    transfer_date = datetime.datetime.strptime(entry["date"], "%Y-%m-%d").date()
+                    transferMatch = ToshlTransfer(transfer_date, transfer_date, self.account, self.category, self.tag,
+                                                  entry["desc"], entry["amount"])
+                    return transferMatch
+
         return None
 
+    def prettyPrint(self):
+        print 'Account:  ' + self.account
+        print 'Date:     ' + self.date.isoformat()
+        print 'Category: ' + self.category
+        print 'Tag:      ' + self.tag
+        print 'Desc.:    ' + self.message
+        print 'Amount:   ' + str(self.amount)
+
     def sendToToshl(self, token):
-        pass
+        print '>>>>> SENDING TRANSFER TO TOSH '
+
+
