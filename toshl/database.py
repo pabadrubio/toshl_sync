@@ -1,7 +1,7 @@
 # Pablo Abad 2017
 #
 # Toshl database program
-import json, requests
+import json, requests, datetime
 
 class ToshlDatabase():
     def __init__(self, token):
@@ -76,3 +76,11 @@ class ToshlDatabase():
     def getCategoryId(self, category):
         return self._categoriesIds[category]
 
+    def listTransfers(self, token):
+        time_from = datetime.date(2017, 5, 1).isoformat()
+        time_to = datetime.date(2017, 10, 1).isoformat()
+        response = requests.get('https://api.toshl.com/entries?from=%s&to=%s' % (time_from,  time_to), auth=(token, ""))
+        if response.status_code == 200:
+            entries = response.json()
+            for entry in entries:
+                print entry

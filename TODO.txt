@@ -1,0 +1,2 @@
+Make sure transfers have their own category
+Transfer creation

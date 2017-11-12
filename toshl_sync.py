@@ -21,7 +21,7 @@ def run(transfers_file, token_file, decoding_file, decoding_history):
     transfers = loadCSVFile(transfers_file)
     app = SyncApp(token, decoder, database)
     app.run(transfers)
-
+    #database.listTransfers(token)
 
 def main():
     parser = argparse.ArgumentParser(prog="toshl_sync", description='Synchronizes the Toshl account to a CSV transfers file')

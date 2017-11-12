@@ -29,10 +29,11 @@ class SyncApp:
         if decoded_transfer is not None:
             similarTransfer = decoded_transfer.searchForSimilarTransferInToshl(self.token, self.database)
             if similarTransfer is not None and self.askForOverwrite(similarTransfer) == False:
+                Log.debug("Skipping transfer because to a similar transfer was found.")
                 return
-            decoded_transfer.sendToToshl(self.token)
+            decoded_transfer.sendToToshl(self.token, self.database)
         else:
-            Log.debug("Skiping transfer")
+            Log.debug("Skipping transfer")
 
     def askForOverwrite(self, transfer):
         print '-----------------------------------------------'
