@@ -20,8 +20,14 @@ class ToshlTransfer:
         self._currency = {u'rate': 1.0, u'code': u'EUR', u'main_rate': 1.0, u'fixed': False}
 
     def __str__(self):
-        return "(%s, %s, %s, %s, %s, %s, %f)" % (self.date.isoformat(), self.effectiveDate.isoformat(), self.account,
-                                                 self.category, self.tag, self.message, self.amount)
+        ustr = "(%s, %s, %s, %s, %s, %s, %f)" % (self.date.isoformat(),
+                                                 self.effectiveDate.isoformat(),
+                                                 self.account.encode('utf-8'),
+                                                 self.category.encode('utf-8'),
+                                                 self.tag.encode('utf-8'),
+                                                 self.message.encode('utf-8'),
+                                                 self.amount)
+        return ustr
 
     def __repr__(self):
         return self.__str__()
@@ -53,7 +59,20 @@ class ToshlTransfer:
         print 'Amount:   ' + str(self.amount)
 
     def sendToToshl(self, token, database):
-        if True:  # Category is not transfer
+        isATMExtract = (self.category == database.atmCategory())
+        if isATMExtract:
+            cashAccount = database.getAccountId("Efectivo")
+            payload = {u'amount': self.amount,
+                       u'currency': self._currency,
+                       u'date': self.date.isoformat(),
+                       u'desc': self.message,
+                       u'account': database.getAccountId(self.account),
+                       u'transaction': {
+                           u'account ': cashAccount,
+                           u'currency': self._currency
+                       }}
+
+        else:
             payload = {u'amount': self.amount,
                        u'currency': self._currency,
                        u'date': self.date.isoformat(),
@@ -66,12 +85,13 @@ class ToshlTransfer:
             if self.category != '':
                 payload[u'category'] = database.getCategoryId(self.category)
 
-            Log.debug('Sending transfer to Toshl: ' + str(payload))
-            response = requests.post('https://api.toshl.com/entries', json=payload, auth=(token, ""))
-            if response.status_code != 201:
-                Log.debug('Error sending data to Toshl')
-                Log.debug(' Status code: ' + response.status_code)
-                Log.debug(' Payload: ' + response.content)
-                exit(1)
-            else:
-                Log.debug('Transfer successfully writen to Toshl')
+        Log.debug('Sending transfer to Toshl: ' + str(payload))
+        response = requests.post('https://api.toshl.com/entries', json=payload, auth=(token, ""))
+        return
+        if response.status_code != 201:
+            Log.debug('Error sending data to Toshl')
+            Log.debug(' Status code: ' + response.status_code)
+            Log.debug(' Payload: ' + response.content)
+            exit(1)
+        else:
+            Log.debug('Transfer successfully writen to Toshl')

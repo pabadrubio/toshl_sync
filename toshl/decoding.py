@@ -3,15 +3,17 @@
 # Toshl database program
 
 import csv
+import codecs
 
 from toshl.transfer import ToshlTransfer
 
 class Decoder:
-    def __init__(self, toshlDatabase, decodingFile, decodingHistoryFile):
+    def __init__(self, toshlDatabase, decodingFile, decodingHistoryFile, account):
         self._decoding_hints = self._load_decoding_file(decodingFile)
         self._decoding_history = self._load_decoding_file(decodingHistoryFile)
         self.decodingHistoryFile = decodingHistoryFile
         self.toshlDatabase = toshlDatabase
+        self.account = account
 
     def try_to_decode(self, csvTransfer):
         decoded_transfer = self.try_to_decode_with_hints(csvTransfer, self._decoding_hints)
@@ -29,10 +31,10 @@ class Decoder:
         print 'Amount : ' + str(csvTransfer.amount)
         print '-----------------------------------------------'
         print 'Choose a category:'
-        category = self.choose_from_list(self.toshlDatabase.getCategories())
+        category = self.choose_category_from_list(self.toshlDatabase.getCategories())
         print 'Choose a tag:'
-        tag = self.choose_from_list(self.toshlDatabase.getTags())
-        transfer = ToshlTransfer(csvTransfer.date, csvTransfer.effectiveDate, 'ING diba', category, tag,
+        tag = self.choose_tag_from_list(self.toshlDatabase.getTags(), self.toshlDatabase.getCategoryId(category))
+        transfer = ToshlTransfer(csvTransfer.date, csvTransfer.effectiveDate, self.account, category, tag,
                                  csvTransfer.account + ' - ' + csvTransfer.purpose + ' - ' + csvTransfer.message,
                                  csvTransfer.amount)
         # Add to history ...
@@ -40,7 +42,7 @@ class Decoder:
                                                category, tag))
         return transfer
 
-    def choose_from_list(self, elements):
+    def choose_from_list(self, elements, label, create_function):
         index = 0
         elementsPerRow = 4
         while index < len(elements):
@@ -50,8 +52,26 @@ class Decoder:
                 print '%2d. %-30s' % (index+1, (e[:26] + '..') if len(e) > 28 else e),
                 index += 1
             print ''
-        selection = int(raw_input("Please choose (0 for None)"))
-        return '' if (selection == 0) else elements[selection-1]
+        selection = raw_input("Please choose (N for None, G to add a new expense type, I for a new Income type)")
+        if selection.upper() == "N":
+            return ''
+        elif selection.upper() == "G":
+            name = raw_input("Enter the name for the new expense " + label + ":")
+            create_function(name, "expense")
+            return name
+        elif selection.upper() == "I":
+            name = raw_input("Enter the name for the new income " + label + ":")
+            create_function(name, "income")
+            return name
+        else:
+            selectionIdx = int(selection)
+            return elements[selectionIdx-1]
+
+    def choose_category_from_list(self, elements):
+        return self.choose_from_list(elements, "category", lambda name, t: self.toshlDatabase.addCategory(name, t))
+
+    def choose_tag_from_list(self, elements, category_id):
+        return self.choose_from_list(elements, "tag", lambda name, t: self.toshlDatabase.addTag(name, t, category_id))
 
     def _load_decoding_file(self, decodingFile):
         decoding_hints = []
@@ -59,7 +79,11 @@ class Decoder:
             reader = csv.reader(csvfile, delimiter=';')
             reader.next()  # Skip header
             for row in reader:
-                hint = DecodingHint(row[0], row[1], row[2], row[3], row[4])
+                hint = DecodingHint(unicode(row[0], 'iso-8859-1'),
+                                    unicode(row[1], 'iso-8859-1'),
+                                    unicode(row[2], 'iso-8859-1'),
+                                    unicode(row[3], 'iso-8859-1'),
+                                    unicode(row[4], 'iso-8859-1'))
                 decoding_hints.append(hint)
         return decoding_hints
 
@@ -72,7 +96,7 @@ class Decoder:
             if hint.message not in csvTransfer.message:
                 continue
             # Match found!
-            transfer = ToshlTransfer(csvTransfer.date, csvTransfer.effectiveDate, 'ING diba', hint.category, hint.tag,
+            transfer = ToshlTransfer(csvTransfer.date, csvTransfer.effectiveDate, self.account, hint.category, hint.tag,
                                      csvTransfer.account + ' - ' + csvTransfer.purpose + ' - ' + csvTransfer.message,
                                      csvTransfer.amount)
             return transfer
@@ -80,7 +104,7 @@ class Decoder:
 
     def _add_to_history_file(self, decodingHint):
         self._decoding_history.append(decodingHint)
-        with open(self.decodingHistoryFile, "a") as f:
+        with codecs.open(self.decodingHistoryFile, "a", "iso-8859-1") as f:
             f.write(decodingHint.account + ";" + decodingHint.purpose + ";" + decodingHint.message + ";" +
                     decodingHint.category + ";" + decodingHint.tag + '\n')
 

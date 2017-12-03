@@ -25,17 +25,17 @@ class CSVTransfer:
     def fromFileRow(row):
         date = datetime.datetime.strptime(row[0], "%d.%m.%Y").date()
         effectiveDate = datetime.datetime.strptime(row[1], "%d.%m.%Y").date()
-        account = row[2]
-        purpose = row[3]
-        message = row[4]
+        account = unicode(row[2], 'iso-8859-1')
+        purpose = unicode(row[3], 'iso-8859-1')
+        message = unicode(row[4], 'iso-8859-1')
         amount = float(row[5].replace(".","").replace(",","."))
         return CSVTransfer(date, effectiveDate, account, message, purpose, amount)
 
-def loadCSVFile(filename):
+def loadCSVTransfersFile(filename):
     with open(filename, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=';')
         while reader.next()[0] != "Buchung":
             pass
-        return map(lambda row : CSVTransfer.fromFileRow(row), reader)
-
-
+        transfers = map(lambda row : CSVTransfer.fromFileRow(row), reader)
+        transfers.sort(key = lambda transfer: transfer.date)
+        return transfers

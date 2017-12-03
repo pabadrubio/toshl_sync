@@ -3,7 +3,7 @@
 # Main program to update the tosh
 import argparse, requests
 from toshl.database import ToshlDatabase
-from toshl.csvfile import loadCSVFile
+from toshl.csvfile import loadCSVTransfersFile
 
 
 def read_token(token_file):

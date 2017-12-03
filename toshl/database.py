@@ -2,16 +2,21 @@
 #
 # Toshl database program
 import json, requests, datetime
+from toshl.log import Log
 
 class ToshlDatabase():
     def __init__(self, token):
-        self.reload(token)
+        self.token = token
+        self.reload()
 
-    def reload(self, token):
+    def reload(self):
         # Must check locale
-        self.loadAccounts(token)
-        self.loadCategories(token)
-        self.loadTags(token)
+        self.loadAccounts(self.token)
+        self.loadCategories(self.token)
+        self.loadTags(self.token)
+
+    def atmCategory(self):
+        return "Extraer dinero de cajero"
 
     def loadAccounts(self, token):
         response = requests.get('https://api.toshl.com/accounts', auth=(token, ""))
@@ -30,9 +35,10 @@ class ToshlDatabase():
         if response.status_code == 200:
             allCategories = response.json()
             self._categoriesIds = {}
+            self._categoriesIds[self.atmCategory()] = -1
             for category in allCategories:
                 self._categoriesIds[category["name"]] = category["id"]
-            self._categories = self._categoriesIds.keys()
+            self._categories = [self.atmCategory()] + self._categoriesIds.keys()
         else:
             print response
             raise Exception("Connection error: Can not get Toshl categories")
@@ -84,3 +90,32 @@ class ToshlDatabase():
             entries = response.json()
             for entry in entries:
                 print entry
+
+    def addCategory(self, category, type):
+        payload = {u'name': category,
+                   u'type': type}
+        Log.debug('Adding category to Toshl: ' + str(payload))
+        response = requests.post('https://api.toshl.com/categories', json=payload, auth=(self.token, ""))
+        if response.status_code != 201:
+            Log.debug('Error sending data to Toshl')
+            Log.debug(' Status code: ' + str(response.status_code))
+            Log.debug(' Payload: ' + response.content)
+            exit(1)
+        else:
+            Log.debug('Category successfully added to Toshl')
+            self.reload()
+
+    def addTag(self, tag, type, categoryId):
+        payload = {u'name': tag,
+                   u'type': type,
+                   u'category': categoryId}
+        Log.debug('Adding Tag to Toshl: ' + str(payload))
+        response = requests.post('https://api.toshl.com/tags', json=payload, auth=(self.token, ""))
+        if response.status_code != 201:
+            Log.debug('Error sending data to Toshl')
+            Log.debug(' Status code: ' + str(response.status_code))
+            Log.debug(' Payload: ' + response.content)
+            exit(1)
+        else:
+            Log.debug('Tag successfully added to Toshl')
+            self.reload()
