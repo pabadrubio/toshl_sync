@@ -1,8 +1,8 @@
 # Pablo Abad 2017
 #
 # Toshl database program
-import json, requests, datetime
-from toshl.log import Log
+import requests, datetime
+from legacy.log import Log
 
 class ToshlDatabase():
     def __init__(self, token):
@@ -35,10 +35,10 @@ class ToshlDatabase():
         if response.status_code == 200:
             allCategories = response.json()
             self._categoriesIds = {}
-            self._categoriesIds[self.atmCategory()] = -1
             for category in allCategories:
                 self._categoriesIds[category["name"]] = category["id"]
             self._categories = [self.atmCategory()] + self._categoriesIds.keys()
+            self._categoriesIds[self.atmCategory()] = -1
         else:
             print response
             raise Exception("Connection error: Can not get Toshl categories")

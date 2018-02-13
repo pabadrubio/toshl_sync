@@ -5,7 +5,7 @@
 import csv
 import codecs
 
-from toshl.transfer import ToshlTransfer
+from legacy.transfer import ToshlTransfer
 
 class Decoder:
     def __init__(self, toshlDatabase, decodingFile, decodingHistoryFile, account):
@@ -32,8 +32,15 @@ class Decoder:
         print '-----------------------------------------------'
         print 'Choose a category:'
         category = self.choose_category_from_list(self.toshlDatabase.getCategories())
-        print 'Choose a tag:'
-        tag = self.choose_tag_from_list(self.toshlDatabase.getTags(), self.toshlDatabase.getCategoryId(category))
+        if category is not None and category != '':
+            print 'Choose a tag:'
+            tag = self.choose_tag_from_list(self.toshlDatabase.getTags(), category)
+        else:
+            tag = ''
+
+        if category is None or tag is None:
+            return None
+
         transfer = ToshlTransfer(csvTransfer.date, csvTransfer.effectiveDate, self.account, category, tag,
                                  csvTransfer.account + ' - ' + csvTransfer.purpose + ' - ' + csvTransfer.message,
                                  csvTransfer.amount)
@@ -52,7 +59,7 @@ class Decoder:
                 print '%2d. %-30s' % (index+1, (e[:26] + '..') if len(e) > 28 else e),
                 index += 1
             print ''
-        selection = raw_input("Please choose (N for None, G to add a new expense type, I for a new Income type)")
+        selection = raw_input("Please choose (E for skip, N for None, G to add a new expense type, I for a new Income type)")
         if selection.upper() == "N":
             return ''
         elif selection.upper() == "G":
@@ -63,6 +70,8 @@ class Decoder:
             name = raw_input("Enter the name for the new income " + label + ":")
             create_function(name, "income")
             return name
+        elif selection.upper() == "E":
+            return None
         else:
             selectionIdx = int(selection)
             return elements[selectionIdx-1]
@@ -70,8 +79,8 @@ class Decoder:
     def choose_category_from_list(self, elements):
         return self.choose_from_list(elements, "category", lambda name, t: self.toshlDatabase.addCategory(name, t))
 
-    def choose_tag_from_list(self, elements, category_id):
-        return self.choose_from_list(elements, "tag", lambda name, t: self.toshlDatabase.addTag(name, t, category_id))
+    def choose_tag_from_list(self, elements, category):
+        return self.choose_from_list(elements, "tag", lambda name, t: self.toshlDatabase.addTag(name, t, category))
 
     def _load_decoding_file(self, decodingFile):
         decoding_hints = []
@@ -116,4 +125,3 @@ class DecodingHint:
         self.message = message
         self.category = category
         self.tag = tag
-

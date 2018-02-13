@@ -1,18 +1,18 @@
 # Pablo Abad 2017
 #
 # Toshl database program
-from toshl.log import Log
+from legacy.log import Log
 
 class SyncApp:
 
-    def __init__(self, token, decoder, database):
+    def __init__(self, token, decoder, database, doAskForOverwrite):
         self.token = token
         self.decoder = decoder
         self.database = database
+        self.doAskForOverwrite = doAskForOverwrite
 
     def run(self, transfers):
-        for i in range(10):
-            transfer = transfers[i]
+        for transfer in transfers:
             self.handle_transfer(transfer)
 
     def handle_transfer(self, transfer):
@@ -36,9 +36,12 @@ class SyncApp:
             Log.debug("Skipping transfer")
 
     def askForOverwrite(self, transfer):
-        print '-----------------------------------------------'
-        print 'A similar transfer was found:'
-        transfer.prettyPrint()
-        print '-----------------------------------------------'
-        selection = raw_input("Overwrite? (Enter yes to overwrite)")
-        return selection == "yes"
+        if self.doAskForOverwrite:
+            print '-----------------------------------------------'
+            print 'A similar transfer was found:'
+            transfer.prettyPrint()
+            print '-----------------------------------------------'
+            selection = raw_input("Overwrite? (Enter yes to overwrite)")
+            return selection == "yes"
+        else:
+            return False

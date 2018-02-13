@@ -1,2 +1,7 @@
-Make sure transfers have their own category
-Transfer creation
+Sistema completamente automático:
+- Mas adelante: Diferenciar por precios (Db Betrieb)
+- Mejorar el codigo (Separar por conceptos):
+   - Reordenar
+   - Unit tests
+- Para un mismo tipo de transferencia buscar coincidencias (de mas de 3 letras) + asegurarse que no pertenece a otro:
+   - Ideas: https://en.wikipedia.org/wiki/Generalized_suffix_tree
