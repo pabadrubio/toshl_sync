@@ -9,10 +9,10 @@ class ComposedClassifier:
     def classify(self, bankEntry):
         for classifier in self.classifiers:
             result = classifier.classify(bankEntry)
-            if result is not None:
+            if result[0] is not None:
                 return result
         return None, None
 
     def update(self, bankEntry, category, tag):
         for classifier in self.classifiers:
-            classifier.classify(bankEntry, category, tag)
+            classifier.update(bankEntry, category, tag)

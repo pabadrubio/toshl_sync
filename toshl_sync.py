@@ -6,6 +6,8 @@ from toshl.ToshlApi import ToshlApi
 from toshl.ApiToshlDatabase import ApiToshlDatabase
 from toshl.ToshlSyncApp import ToshlSyncApp
 from toshl.HintsFileClassifier import HintsFileClassifier
+from toshl.SmartClassifer import SmartClassifier
+from toshl.ComposedClassifier import ComposedClassifier
 from toshl.INGTransfersLoader import INGTransfersLoader
 from toshl.IOHandler import IOHandler
 from toshl.FancyConsoleUI import FancyConsoleUI
@@ -24,7 +26,9 @@ def run(transfers_file, token_file, decoding_file, decoding_history, intellij_mo
         io = IOHandler('cp437')
     api = ToshlApi(token, io)
     database = ApiToshlDatabase(api)
-    classifier = HintsFileClassifier(decoding_file)
+    hintsClassifier = HintsFileClassifier(decoding_file)
+    smartClassifier = SmartClassifier(decoding_history, True)
+    classifier = ComposedClassifier([hintsClassifier, smartClassifier])
     transferLoader = INGTransfersLoader()
     transfers = transferLoader.loadTransfers(transfers_file)
     if intellij_mode:

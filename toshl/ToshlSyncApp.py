@@ -26,6 +26,8 @@ class ToshlSyncApp:
             manuallyClassified = True
 
         if category is not None:
+            if manuallyClassified:
+                self.classifier.update(bankEntry, category, tag)
             toshlEntry = self._createToshlEntry(bankEntry, category, tag)
             similarEntry = self.database.getSimilarEntry(toshlEntry)
             if similarEntry is not None and self.askForOverwrite(similarEntry) == False:
@@ -33,8 +35,7 @@ class ToshlSyncApp:
                 return
             else:
                 self.database.addEntry(toshlEntry)
-                if manuallyClassified:
-                    self.classifier.update(bankEntry, category, tag)
+
         else:
             self.io.log("Skipping transfer")
 

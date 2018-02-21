@@ -1,3 +1,4 @@
 - Diferenciar por precios (Db Betrieb)
 - Para un mismo tipo de transferencia buscar coincidencias (de mas de 3 letras) + asegurarse que no pertenece a otro:
    - Ideas: https://en.wikipedia.org/wiki/Generalized_suffix_tree
+
